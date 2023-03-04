@@ -33,14 +33,37 @@ async function saveContacts() {
 async function addNewContact() {
     const firstName = await rl.question('First Name: ');
     const lastName = await rl.question('Last Name: ');
-    
+
+    const lastContact = contactsList[contactsList.length - 1];
+    const id = lastContact ? lastContact.id + 1 : 0;
+
     const newContact = {
-        id: contactsList.length,
+        id,
         firstName,
         lastName,
     };
     
     contactsList.push(newContact);
+    saveContacts();
+}
+
+async function deleteContact() {
+    if (contactsList.length < 1) {
+        console.error('There is no contact on the list');
+        return;
+    }
+
+    showContactsList();
+
+    const contactId = await rl.question('Delete ID: ');
+    const contactIndex = contactsList.findIndex(({ id }) => id === Number(contactId));
+
+    if (contactIndex < 0) {
+        console.error('Invalid ID');
+        return;
+    }
+
+    contactsList.splice(contactIndex, 1);
     saveContacts();
 }
 
@@ -58,17 +81,23 @@ function quit() {
 }
 
 async function help() {
-    console.log('n: Add new contact\nl: show contacts list\nq: quit');
+    console.log('n: add new contact\nd: delete a contact\nl: show contacts list\nq: quit');
+    console.log('----------');
+
     const action = await rl.question('Enter your input: ');
 
     if (action === 'n') {
         await addNewContact();
+    } else if (action === 'd') {
+        await deleteContact();
     } else if (action === 'l') {
         showContactsList();
     } else {
         quit();
         return;
     }
+
+    console.log('----------');
 
     help();
 }
