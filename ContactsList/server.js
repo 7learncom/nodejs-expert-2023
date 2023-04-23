@@ -1,40 +1,37 @@
-import http from 'http';
-import url from 'url';
+import express from 'express';
 
 import { formatContactsList, loadContacts } from './services.js';
 
+const app = express();
+
 const contactsList = [];
 
-const server = http.createServer((req, res) => {
-    const urlData = url.parse(req.url, true);
+function loggerMiddleware(req, res, next) {
+    console.log('Request:', req.method, req.url);
+    next();
+}
 
-    console.log(req.method, req.url);
+app.disable('etag');
+app.use(loggerMiddleware);
 
-    let responseData = null;
+app.get('/list', (req, res) => {
+    if (req.query.format) {
+        const responseData = `<pre>${formatContactsList(contactsList)}</pre>`;
 
-    if (urlData.query.format == 'true') {
-        res.setHeader('Content-Type', 'text/html');
-
-        responseData = '<pre>';
-        responseData += formatContactsList(contactsList);
-        responseData += '</pre>';
-    } else {
-        res.setHeader('Content-Type', 'application/json');
-        responseData = JSON.stringify(contactsList);
+        res.type('html');
+        res.send(responseData);
+        return;
     }
 
-    res.writeHead(200);
-    res.write(responseData);
-
-    res.end();
+    res.json(contactsList);
 });
 
 async function main() {
     const loadedContacts = await loadContacts();
 
     contactsList.push(...loadedContacts);
-    server.listen(3000, () => {
-        console.log('HTTP server is listening on the port 3000');
+    app.listen(3000, () => {
+        console.log('express server is listening on the port 3000');
     });
 }
 
