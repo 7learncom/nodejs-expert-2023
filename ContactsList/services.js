@@ -22,7 +22,7 @@ export async function saveContacts(contactsList) {
 
 export function formatContactsList(contactsList) {
     return contactsList
-        .map(({ id, firstName, lastName }) => `#${id} ${firstName} ${lastName}`)
+        .map(({ id, first_name, last_name, is_favorite }) => `${is_favorite ? '*' : '#'}${id} ${first_name} ${last_name}`)
         .join('\n');
 }
 

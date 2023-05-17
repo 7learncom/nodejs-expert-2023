@@ -5,21 +5,24 @@ import {
     formatContactsList,
     generateNewContactId,
 } from '../services.js';
+import { query } from '../db.js';
 
 const contactsList = [];
 
 const router = express.Router();
 
-router.get('/list', (req, res) => {
+router.get('/list', async (req, res) => {
+    const contactsListDB = await query('SELECT * FROM contacts');
+
     if (req.query.format) {
-        const responseData = `<pre>${formatContactsList(contactsList)}</pre>`;
+        const responseData = `<pre>${formatContactsList(contactsListDB.rows)}</pre>`;
 
         res.type('html');
         res.send(responseData);
         return;
     }
 
-    res.json(contactsList);
+    res.json(contactsListDB.rows);
 });
 
 router.post('/new', (req, res) => {
