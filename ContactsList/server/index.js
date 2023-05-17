@@ -1,12 +1,21 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import routes from './routes.js';
+import { sequelize } from '../models/index.js';
 
 const app = express();
 
 function loggerMiddleware(req, res, next) {
     console.log('Request:', req.method, req.url);
     next();
+}
+
+
+try {
+    await sequelize.sync({ force: false });
+    console.log('All models were synchronized successfully');
+} catch(error) {
+    console.log('Error in syncing models:', error);
 }
 
 app.disable('etag');
