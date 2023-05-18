@@ -1,106 +1,85 @@
 import express from 'express';
-import {
-    loadContacts,
-    saveContacts,
-    formatContactsList,
-    generateNewContactId,
-} from '../services.js';
-import { query } from '../db.js';
-
-const contactsList = [];
+import { formatContactsList } from '../services.js';
+import { Contact } from '../models/index.js';
 
 const router = express.Router();
 
 router.get('/list', async (req, res) => {
-    const contactsListDB = await query('SELECT * FROM contacts');
+    try {
+        const contacts = await Contact.findAll();
 
-    if (req.query.format) {
-        const responseData = `<pre>${formatContactsList(contactsListDB.rows)}</pre>`;
+        if (req.query.format) {
+            const responseData = `<pre>${formatContactsList(contacts)}</pre>`;
 
-        res.type('html');
-        res.send(responseData);
-        return;
+            res.type('html');
+            res.send(responseData);
+            return;
+        }
+
+        res.json(contacts);
+    } catch(error) {
+        res.status(500).send({
+            message: 'Something went wrong',
+            error,
+        });
     }
-
-    res.json(contactsListDB.rows);
 });
 
-router.post('/new', (req, res) => {
-    const { firstName, lastName } = req.body;
+router.post('/new', async (req, res) => {
+    const { firstName, lastName, mobilePhone, isFavorite } = req.body;
 
-    const id = generateNewContactId(contactsList);
+    try {
+        const { id } = await Contact.create({
+            firstName,
+            lastName,
+            mobilePhone,
+            isFavorite,
+        });
 
-    const newContact = {
-        id,
-        firstName,
-        lastName,
-    };
-
-    contactsList.push(newContact);
-    saveContacts(contactsList);
-
-    res.send(`The contact "#${id} ${firstName} ${lastName}" has been created!`);
+        res.send(`The contact "#${id} ${firstName} ${lastName}" has been created!`);
+    } catch(error) {
+        res.status(400).send({
+            message: 'Something went wrong',
+            error,
+        });
+    }
 });
 
-router.delete('/:id', (req, res) => {
-    if (contactsList.length < 1) {
-        res.status(400).send({
-            message: 'There is no contact on the list',
+router.delete('/:id', async (req, res) => {
+    try {
+        await Contact.destroy({
+            where: { id: req.params.id },
         });
 
-        return;
-    }
-
-    const contactIndex = contactsList.findIndex(({ id }) => id === Number(req.params.id));
-
-    if (contactIndex < 0) {
+        res.send(`Contact #${req.params.id} has been deleted!`);
+    } catch(error) {
         res.status(400).send({
-            message: 'Invalid ID',
+            message: 'Something went wrong',
+            error,
         });
-
-        return;
     }
-
-    contactsList.splice(contactIndex, 1);
-    saveContacts(contactsList);
-
-    res.send(`Contact #${req.params.id} has been deleted!`);
 });
 
-router.put('/:id', (req, res) => {
-    if (contactsList.length < 1) {
-        res.status(400).send({
-            message: 'There is no contact on the list',
+router.put('/:id', async (req, res) => {
+    try {
+        const { firstName, lastName, mobilePhone, isFavorite } = req.body;
+
+        await Contact.update({
+            firstName,
+            lastName,
+            mobilePhone,
+            isFavorite,
+        }, {
+            where: { id: req.params.id },
         });
 
-        return;
-    }
-
-    const contactIndex = contactsList.findIndex(({ id }) => id === Number(req.params.id));
-
-    if (contactIndex < 0) {
+        res.send(`Contact #${req.params.id} has been modified!`);
+    } catch(error) {
         res.status(400).send({
-            message: 'Invalid ID',
+            message: 'Something went wrong',
+            error,
         });
-
-        return;
     }
-
-    const { firstName, lastName } = req.body;
-    const contact = contactsList[contactIndex];
-    const updatedContact = {
-        ...contact,
-        firstName: firstName || contact.firstName,
-        lastName: lastName || contact.lastName,
-    };
-
-    contactsList.splice(contactIndex, 1, updatedContact);
-    saveContacts(contactsList);
-
-    res.send(`Contact #${req.params.id} has been modified!`);
 });
-
-const loadedContacts = await loadContacts();
-contactsList.push(...loadedContacts);
 
 export default router;

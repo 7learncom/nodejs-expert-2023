@@ -12,7 +12,7 @@ function loggerMiddleware(req, res, next) {
 
 
 try {
-    await sequelize.sync({ force: false });
+    await sequelize.sync({ alter: true });
     console.log('All models were synchronized successfully');
 } catch(error) {
     console.log('Error in syncing models:', error);
