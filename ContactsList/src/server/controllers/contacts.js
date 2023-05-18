@@ -1,10 +1,7 @@
-import express from 'express';
-import { formatContactsList } from '../services.js';
-import { Contact } from '../models/index.js';
+import { Contact } from '../../models/index.js';
+import { formatContactsList } from '../../utils.js';
 
-const router = express.Router();
-
-router.get('/list', async (req, res) => {
+export async function getContacts(req, res) {
     try {
         const contacts = await Contact.findAll();
 
@@ -23,9 +20,9 @@ router.get('/list', async (req, res) => {
             error,
         });
     }
-});
+}
 
-router.post('/new', async (req, res) => {
+export async function createContact(req, res) {
     const { firstName, lastName, mobilePhone, isFavorite } = req.body;
 
     try {
@@ -43,9 +40,9 @@ router.post('/new', async (req, res) => {
             error,
         });
     }
-});
+}
 
-router.delete('/:id', async (req, res) => {
+export async function deleteContact(req, res) {
     try {
         await Contact.destroy({
             where: { id: req.params.id },
@@ -58,9 +55,9 @@ router.delete('/:id', async (req, res) => {
             error,
         });
     }
-});
+}
 
-router.put('/:id', async (req, res) => {
+export async function updateContact(req, res) {
     try {
         const { firstName, lastName, mobilePhone, isFavorite } = req.body;
 
@@ -80,6 +77,4 @@ router.put('/:id', async (req, res) => {
             error,
         });
     }
-});
-
-export default router;
+}
