@@ -1,57 +1,39 @@
 import readline from 'readline/promises';
 import { stdin as input, stdout as output } from 'process';
-import {
-    loadContacts,
-    saveContacts,
-    formatContactsList,
-    generateNewContactId,
-} from './services.js';
+import { formatContactsList } from './services.js';
+import { sequelize, Contact } from './models/index.js';
 
 const rl = readline.createInterface({ input, output });
-
-const contactsList = [];
-
-console.log('--- ContactsList ---');
 
 async function createNewContact() {
     const firstName = await rl.question('First Name: ');
     const lastName = await rl.question('Last Name: ');
+    const mobilePhone = await rl.question('Phone (Mobile): ');
+    const isFavorite = await rl.question('Is Favorite (Default: No): ');
 
-    const id = generateNewContactId(contactsList);
-
-    const newContact = {
-        id,
+    await Contact.create({
         firstName,
         lastName,
-    };
-
-    contactsList.push(newContact);
-    saveContacts(contactsList);
+        mobilePhone,
+        isFavorite: ['yes', 'Yes', 'YES'].includes(isFavorite),
+    });
 }
 
 async function deleteContact() {
-    if (contactsList.length < 1) {
-        console.error('There is no contact on the list');
-        return;
-    }
+    await showContactsList();
 
-    showContactsList();
+    const id = await rl.question('Delete ID: ');
 
-    const contactId = await rl.question('Delete ID: ');
-    const contactIndex = contactsList.findIndex(({ id }) => id === Number(contactId));
-
-    if (contactIndex < 0) {
-        console.error('Invalid ID');
-        return;
-    }
-
-    contactsList.splice(contactIndex, 1);
-    saveContacts(contactsList);
+    await Contact.destroy({
+        where: { id },
+    });
 }
 
-function showContactsList() {
-    const formattedContactsList = formatContactsList(contactsList);
-    
+async function showContactsList() {
+    const contacts = await Contact.findAll();
+
+    const formattedContactsList = formatContactsList(contacts);
+
     console.log('Contacts List:');
     console.log(formattedContactsList);
 }
@@ -71,7 +53,7 @@ async function help() {
     } else if (action === 'd') {
         await deleteContact();
     } else if (action === 'l') {
-        showContactsList();
+        await showContactsList();
     } else {
         quit();
         return;
@@ -83,10 +65,16 @@ async function help() {
 }
 
 async function main() {
-    const loadedContacts = await loadContacts();
+    console.log('--- ContactsList ---');
 
-    contactsList.push(...loadedContacts);
-    help();
+    try {
+        await sequelize.sync({ force: false });
+        console.log('[All models were synchronized successfully]');
+
+        help();
+    } catch(error) {
+        console.log('Error in syncing models:', error);
+    }
 }
 
 await main();
