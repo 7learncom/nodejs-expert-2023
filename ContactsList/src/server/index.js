@@ -7,7 +7,7 @@ import { sequelize } from '../models/index.js';
 import configs from '../configs/server.js';
 
 try {
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ force: false });
     console.log('All models were synchronized successfully');
 } catch(error) {
     console.log('Error in syncing models:', error);
