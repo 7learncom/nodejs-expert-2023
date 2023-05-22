@@ -4,25 +4,30 @@ import { formatContactsList } from '../../utils.js';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-export async function getContacts(req, res) {
+async function loadContacts(req, res, next) {
     try {
-        const contacts = await Contact.findAll();
+        const {
+            sort,
+            desc,
+        } = req.query;
 
-        if (req.query.format) {
-            const responseData = `<pre>${formatContactsList(contacts)}</pre>`;
+        const order = [];
 
-            res.type('html');
-            res.send(responseData);
-            return;
+        if (sort) {
+            order.push(
+                [sort,  desc === 'true' ? 'DESC' : 'ASC'],
+            );
         }
 
-        const normalizedeContacts = contacts.map(({ dataValues: { id, profilePicture, ...rest } }) => ({
-            id,
-            profilePicture: profilePicture ? `/images/profile-picture/${id}` : null,
-            ...rest
-        }));
+        const contacts = await Contact.findAll({
+            order,
+        });
 
-        res.json(normalizedeContacts);
+        req.locals = {
+            contacts,
+        };
+
+        next();
     } catch(error) {
         res.status(500).send({
             message: 'Something went wrong',
@@ -30,6 +35,35 @@ export async function getContacts(req, res) {
         });
     }
 }
+
+async function getContactsFormatted(req, res, next) {
+    if (req.query.format !== 'true') {
+        return next();
+    }
+
+    const { contacts } = req.locals;
+    const responseData = `<pre>${formatContactsList(contacts)}</pre>`;
+
+    res.type('html');
+    res.send(responseData);
+}
+
+async function getContactsJSON(req, res) {
+    const { contacts } = req.locals;
+    const normalizedeContacts = contacts.map(({ dataValues: { id, profilePicture, ...rest } }) => ({
+        id,
+        profilePicture: profilePicture ? `/images/profile-picture/${id}` : null,
+        ...rest
+    }));
+
+    res.json(normalizedeContacts);
+}
+
+export const getContacts = [
+    loadContacts,
+    getContactsFormatted,
+    getContactsJSON,
+];
 
 export async function getContactProfilePicture(req, res) {
     try {
