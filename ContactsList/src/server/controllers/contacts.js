@@ -3,36 +3,41 @@ import { Sequelize } from 'sequelize';
 import { Contact } from '../../models/index.js';
 import { formatContactsList } from '../../utils.js';
 
+const CONTACTS_LIST_PAGE_SIZE = 20;
+
 const upload = multer({ storage: multer.memoryStorage() });
 
 async function loadContacts(req, res, next) {
+    const {
+        sort,
+        desc,
+        q,
+        page = 1,
+    } = req.query;
+
+    const where = {};
+    const order = [];
+
+    if (q) {
+        where[Sequelize.Op.or] = [
+            { firstName: { [Sequelize.Op.like]: `%${q}%` } },
+            { lastName: { [Sequelize.Op.like]: `%${q}%` } },
+            { mobilePhone: { [Sequelize.Op.like]: `%${q}%` } },
+        ];
+    }
+
+    if (sort) {
+        order.push(
+            [sort,  desc === 'true' ? 'DESC' : 'ASC'],
+        );
+    }
+
     try {
-        const {
-            sort,
-            desc,
-            q,
-        } = req.query;
-
-        const where = {};
-        const order = [];
-
-        if (q) {
-            where[Sequelize.Op.or] = [
-                { firstName: { [Sequelize.Op.like]: `%${q}%` } },
-                { lastName: { [Sequelize.Op.like]: `%${q}%` } },
-                { mobilePhone: { [Sequelize.Op.like]: `%${q}%` } },
-            ];
-        }
-
-        if (sort) {
-            order.push(
-                [sort,  desc === 'true' ? 'DESC' : 'ASC'],
-            );
-        }
-
         const contacts = await Contact.findAll({
             where,
             order,
+            limit: CONTACTS_LIST_PAGE_SIZE,
+            offset: Math.max(0, (page - 1) * CONTACTS_LIST_PAGE_SIZE),
         });
 
         req.locals = {
