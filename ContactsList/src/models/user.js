@@ -1,4 +1,10 @@
 import { DataTypes } from 'sequelize';
+import bcrypt from 'bcrypt';
+
+async function hashPassword(user) {
+  const salt = await bcrypt.genSalt(10);
+  user.password = await bcrypt.hash(user.password, salt);
+}
 
 export default function(sequelize) {
     return sequelize.define('User', {
@@ -14,6 +20,17 @@ export default function(sequelize) {
         password: {
           type: DataTypes.STRING,
           allowNull: false,
+        },
+      },
+      {
+        hooks: {
+          beforeCreate: hashPassword,
+          beforeUpdate: hashPassword,
+        },
+        instanceMethods: {
+          isValidPassword(password) {
+            return bcrypt.compareSync(password, this.password);
+          },
         },
       },
     );
