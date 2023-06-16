@@ -7,7 +7,7 @@ async function hashPassword(user) {
 }
 
 export default function(sequelize) {
-    return sequelize.define('User', {
+    const User = sequelize.define('User', {
         fullname: {
             type: DataTypes.STRING(40),
             allowNull: false,
@@ -27,11 +27,12 @@ export default function(sequelize) {
           beforeCreate: hashPassword,
           beforeUpdate: hashPassword,
         },
-        instanceMethods: {
-          isValidPassword(password) {
-            return bcrypt.compareSync(password, this.password);
-          },
-        },
       },
     );
+
+    User.prototype.isValidPassword = function (password) {
+      return bcrypt.compareSync(password, this.password);
+    }
+
+    return User;
 }
