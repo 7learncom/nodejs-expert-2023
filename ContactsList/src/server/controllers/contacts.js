@@ -1,5 +1,6 @@
 import multer from 'multer';
 import { Sequelize } from 'sequelize';
+import passport from 'passport';
 import { Contact } from '../../models/index.js';
 import { formatContactsList } from '../../utils.js';
 
@@ -15,7 +16,7 @@ async function loadContacts(req, res, next) {
         page = 1,
     } = req.query;
 
-    const where = {};
+    const where = { UserId: req.user.id };
     const order = [];
 
     if (q) {
@@ -77,6 +78,7 @@ function getContactsJSON(req, res) {
 }
 
 export const getContacts = [
+    passport.authenticate('jwt', { session: false }),
     loadContacts,
     getContactsFormatted,
     getContactsJSON,
@@ -110,6 +112,7 @@ async function createContactCtl(req, res) {
             mobilePhone,
             isFavorite,
             profilePicture,
+            UserId: req.user.id,
         });
 
         res.send(`The contact "#${id} ${firstName} ${lastName}" has been created!`);
@@ -122,15 +125,21 @@ async function createContactCtl(req, res) {
 }
 
 export const createContact = [
+    passport.authenticate('jwt', { session: false }),
     upload.single('profilePicture'),
     createContactCtl,
 ];
 
-export async function deleteContact(req, res) {
+async function deleteContactCtl(req, res) {
     try {
-        await Contact.destroy({
-            where: { id: req.params.id },
+        const deletedContact = await Contact.destroy({
+            where: { id: req.params.id, UserId: req.user.id },
         });
+
+        if (!deletedContact) {
+            res.send(`Contact not found!`);
+            return;
+        }
 
         res.send(`Contact #${req.params.id} has been deleted!`);
     } catch(error) {
@@ -141,18 +150,28 @@ export async function deleteContact(req, res) {
     }
 }
 
-export async function updateContact(req, res) {
+export const deleteContact = [
+    passport.authenticate('jwt', { session: false }),
+    deleteContactCtl,
+];
+
+async function updateContactCtl(req, res) {
     try {
         const { firstName, lastName, mobilePhone, isFavorite } = req.body;
 
-        await Contact.update({
+        const updatedContact = await Contact.update({
             firstName,
             lastName,
             mobilePhone,
             isFavorite,
         }, {
-            where: { id: req.params.id },
+            where: { id: req.params.id, UserId: req.user.id },
         });
+
+        if (!updatedContact) {
+            res.send(`Contact not found!`);
+            return;
+        }
 
         res.send(`Contact #${req.params.id} has been modified!`);
     } catch(error) {
@@ -162,3 +181,8 @@ export async function updateContact(req, res) {
         });
     }
 }
+
+export const updateContact = [
+    passport.authenticate('jwt', { session: false }),
+    updateContactCtl,
+];

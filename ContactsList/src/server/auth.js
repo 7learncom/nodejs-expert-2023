@@ -1,5 +1,6 @@
 import passport from 'passport';
 import LocalStrategy from 'passport-local';
+import passportJWT from 'passport-jwt';
 import { createUser, getUser } from './controllers/users.js';
 
 passport.use('signup', new LocalStrategy({
@@ -37,6 +38,17 @@ passport.use('login', new LocalStrategy(async (username, password, done) => {
         }
 
         done(null, user);
+    } catch(error) {
+        done(error);
+    }
+}));
+
+passport.use(new passportJWT.Strategy({
+    secretOrKey: process.env.JWT_SECRET,
+    jwtFromRequest: passportJWT.ExtractJwt.fromAuthHeaderAsBearerToken(),
+}, (tokenPayload, done) => {
+    try {
+        done(null, tokenPayload.user);
     } catch(error) {
         done(error);
     }
