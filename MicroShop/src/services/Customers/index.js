@@ -17,15 +17,15 @@ app.get('/customers', async (req, res) => {
 app.post('/customer', async (req, res) => {
     const { fullname, address } = req.body;
 
-    const customer = await sql`INSERT INTO customers(fullname, address) VALUES(${fullname}, ${address}) RETURNING *`;
+    const [customer] = await sql`INSERT INTO customers(fullname, address) VALUES(${fullname}, ${address}) RETURNING *`;
 
     res.json(customer);
 });
 
 app.delete('/customer/:id', async (req, res) => {
-    await sql`DELETE FROM products WHERE id = ${req.params.id}`;
+    await sql`DELETE FROM customers WHERE id = ${req.params.id}`;
 
-    res.send(`Product #${req.params.id} has been deleted!`);
+    res.send(`Customer #${req.params.id} has been deleted!`);
 });
 
 app.listen(process.env.PORT, () => {

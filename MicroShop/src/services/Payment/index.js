@@ -9,7 +9,7 @@ const STATUS = {
     FAILED: 2,
 };
 
-await sql`CREATE TABLE IF NOT EXISTS payment (id SERIAL, user_id INTEGER, amount INTEGER, status INTEGER)`;
+await sql`CREATE TABLE IF NOT EXISTS payment (id SERIAL, customer_id INTEGER, amount INTEGER, status INTEGER)`;
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -21,9 +21,9 @@ app.get('/payment', async (req, res) => {
 });
 
 app.post('/payment', async (req, res) => {
-    const { user_id, amount } = req.body;
+    const { customer_id, amount } = req.body;
 
-    const payment = await sql`INSERT INTO payment(user_id, amount, status) VALUES(${user_id}, ${amount}, ${STATUS.PENDING}) RETURNING *`;
+    const [payment] = await sql`INSERT INTO payment(customer_id, amount, status) VALUES(${customer_id}, ${amount}, ${STATUS.PENDING}) RETURNING *`;
 
     res.json(payment);
 });
@@ -35,7 +35,7 @@ app.patch('/payment/:id', async (req, res) => {
         status,
     };
 
-    await sql`UPDATE payment set ${sql(payment, 'status')} WHERE id = ${payment.id}`;
+    await sql`UPDATE payment SET ${sql(payment, 'status')} WHERE id = ${payment.id}`;
 
     res.send(`Payment #${payment.id} has been updated!`);
 });

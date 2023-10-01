@@ -17,7 +17,7 @@ app.get('/products', async (req, res) => {
 app.post('/product', async (req, res) => {
     const { name, price, quantity } = req.body;
 
-    const product = await sql`INSERT INTO products(name, price, quantity) VALUES(${name}, ${price}, ${quantity}) RETURNING *`;
+    const [product] = await sql`INSERT INTO products(name, price, quantity) VALUES(${name}, ${price}, ${quantity}) RETURNING *`;
 
     res.json(product);
 });
@@ -29,7 +29,7 @@ app.patch('/product/:id', async (req, res) => {
         quantity,
     };
 
-    await sql`UPDATE products set ${sql(product, 'quantity')} WHERE id = ${product.id}`;
+    await sql`UPDATE products SET ${sql(product, 'quantity')} WHERE id = ${product.id}`;
 
     res.send(`Product #${product.id} has been updated!`);
 });
