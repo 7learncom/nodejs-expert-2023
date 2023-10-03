@@ -34,6 +34,42 @@ app.patch('/product/:id', async (req, res) => {
     res.send(`Product #${product.id} has been updated!`);
 });
 
+app.patch('/product/:id/order', async (req, res) => {
+    await sql.begin(async sql => {
+        const [product] = await sql`SELECT * FROM products WHERE id = ${req.params.id}`;
+
+        if (!product) {
+            throw new Error(`Invalid product id!`);
+        }
+
+        if (product.quantity < 1) {
+            throw new Error(`Not enough ${product.name} in the store!`);
+        }
+
+        product.quantity -= 1;
+
+        await sql`UPDATE products SET ${sql(product, 'quantity')} WHERE id = ${product.id}`;
+
+        return product;
+    })
+    .then((product) => {
+        res.json(product);
+    })
+    .catch((error) => {
+        res.status(400).send(error.message);
+    });
+});
+
+app.patch('/product/:id/restore', async (req, res) => {
+    const [product] = await sql`SELECT * FROM products WHERE id = ${req.params.id}`;
+
+    product.quantity += 1;
+
+    await sql`UPDATE products SET ${sql(product, 'quantity')} WHERE id = ${product.id}`;
+
+    res.send(`Product #${product.id} has been restored!`);
+});
+
 app.delete('/product/:id', async (req, res) => {
     await sql`DELETE FROM products WHERE id = ${req.params.id}`;
 
