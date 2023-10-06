@@ -2,6 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import 'dotenv/config';
 import sql from './db.js';
+import { createPayment } from './GRPCCalls.js';
 
 const STATUS = {
     PENDING: 0,
@@ -13,7 +14,6 @@ const STATUS = {
 
 const CatalogsService = process.env.CATALOGS_SERVICE;
 const CustomerService = process.env.CUSTOMER_SERVICE;
-const PaymentService = process.env.PAYMENT_SERVICE;
 
 await sql`CREATE TABLE IF NOT EXISTS orders (id SERIAL, customer_id INTEGER, product_id INTEGER, payment_id INTEGER, status INTEGER)`;
 
@@ -48,20 +48,20 @@ app.post('/orders', async (req, res) => {
 
     const orderedProduct = await orderedProductRes.json();
 
-    const paymentRes = await fetch(`${PaymentService}/payment`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `customer_id=${customer.id}&amount=${orderedProduct.price}`
-    });
-    const payment = await paymentRes.json();
+    try {
+        const payment = await createPayment({
+            customer_id: customer.id,
+            amount: orderedProduct.price,
+        });
 
-    const [order] = await sql`INSERT INTO orders
-        (customer_id, product_id, payment_id, status) VALUES
-        (${customer.id}, ${orderedProduct.id}, ${payment.id}, ${STATUS.PENDING}) RETURNING *`;
+        const [order] = await sql`INSERT INTO orders
+            (customer_id, product_id, payment_id, status) VALUES
+            (${customer.id}, ${orderedProduct.id}, ${payment.id}, ${STATUS.PENDING}) RETURNING *`;
 
-    res.json(order);
+        res.json(order);
+    } catch (error) {
+        res.status(500).send(error);
+    }
 });
 
 app.patch('/order/:id', async (req, res) => {

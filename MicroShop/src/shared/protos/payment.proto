@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package microshop.payment;
+
+service Payment {
+    rpc createPayment (NewPaymentRequest) returns (NewPayment) {}
+}
+
+message NewPaymentRequest {
+     int32 customer_id = 1;
+     int32 amount = 2;
+}
+
+message NewPayment {
+    int32 id = 1;
+}
