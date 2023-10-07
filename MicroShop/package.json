@@ -12,10 +12,11 @@
   "license": "ISC",
   "dependencies": {
     "@grpc/grpc-js": "^1.9.5",
-    "@grpc/proto-loader": "^0.7.10",
     "body-parser": "^1.20.2",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "google-protobuf": "^3.21.2",
+    "grpc-tools": "^1.12.4",
     "postgres": "^3.3.5"
   }
 }

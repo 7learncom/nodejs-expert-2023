@@ -56,7 +56,7 @@ app.post('/orders', async (req, res) => {
 
         const [order] = await sql`INSERT INTO orders
             (customer_id, product_id, payment_id, status) VALUES
-            (${customer.id}, ${orderedProduct.id}, ${payment.id}, ${STATUS.PENDING}) RETURNING *`;
+            (${customer.id}, ${orderedProduct.id}, ${payment.getId()}, ${STATUS.PENDING}) RETURNING *`;
 
         res.json(order);
     } catch (error) {

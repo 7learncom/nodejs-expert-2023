@@ -1,14 +1,20 @@
 import grpc from '@grpc/grpc-js';
-import protoLoader from '@grpc/proto-loader';
+import services from '../../shared/protos/compiled/payment_grpc_pb.cjs';
+import messages from '../../shared/protos/compiled/payment_pb.cjs';
 import { STATUS } from './constants.js';
 import sql from './db.js';
 
 async function createPayment(call, callback) {
     try {
-        const { customer_id, amount } = call.request;
+        const customer_id = call.request.getCustomerId();
+        const amount = call.request.getAmount();
+
         const [payment] = await sql`INSERT INTO payment(customer_id, amount, status) VALUES(${customer_id}, ${amount}, ${STATUS.PENDING}) RETURNING *`;
 
-        callback(null, { id: payment.id });
+        const newPayment = new messages.NewPayment();
+        newPayment.setId(payment.id);
+
+        callback(null, newPayment);
     } catch (error) {
         callback(error, null);
     }
@@ -16,10 +22,7 @@ async function createPayment(call, callback) {
 
 const server = new grpc.Server();
 
-const packageDefinition = protoLoader.loadSync('../../shared/protos/payment.proto', { keepCase: true });
-const paymentProto = grpc.loadPackageDefinition(packageDefinition).microshop.payment;
-
-server.addService(paymentProto.Payment.service, {
+server.addService(services.PaymentService, {
     createPayment,
 });
 
