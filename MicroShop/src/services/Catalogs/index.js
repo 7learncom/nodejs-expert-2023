@@ -8,6 +8,10 @@ await sql`CREATE TABLE IF NOT EXISTS products (id SERIAL, name TEXT, price INTEG
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
+app.get('/', (req, res) => {
+    res.send(`${process.env.NAME} service v${process.env.VERSION}`);
+});
+
 app.get('/products', async (req, res) => {
     const products = await sql`SELECT * FROM products`;
 

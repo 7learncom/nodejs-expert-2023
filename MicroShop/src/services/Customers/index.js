@@ -8,6 +8,10 @@ await sql`CREATE TABLE IF NOT EXISTS customers (id SERIAL, fullname TEXT, addres
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
+app.get('/', (req, res) => {
+    res.send(`${process.env.NAME} service v${process.env.VERSION}`);
+});
+
 app.get('/customers', async (req, res) => {
     const customers = await sql`SELECT * FROM customers`;
 
@@ -35,5 +39,5 @@ app.delete('/customer/:id', async (req, res) => {
 });
 
 app.listen(process.env.PORT, () => {
-    console.log('Customers service is running on port', process.env.PORT);
+    console.log(process.env.NAME, 'service is running on port', process.env.PORT);
 });

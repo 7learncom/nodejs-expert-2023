@@ -6,7 +6,9 @@ const NOTIFICATIONS = [];
 
 const connection = await amqp.connect(process.env.AMQP_SERVER);
 const channel = await connection.createChannel();
-channel.assertQueue(process.env.ORDERS_QUEUE);
+channel.assertQueue(process.env.ORDERS_QUEUE, {
+    durable: false,
+});
 
 channel.consume(process.env.ORDERS_QUEUE, (message) => {
     const order = JSON.parse(
@@ -22,6 +24,10 @@ channel.consume(process.env.ORDERS_QUEUE, (message) => {
 });
 
 const app = express();
+
+app.get('/', (req, res) => {
+    res.send(`${process.env.NAME} service v${process.env.VERSION}`);
+});
 
 app.get('/notifications', (req, res) => {
     res.json(

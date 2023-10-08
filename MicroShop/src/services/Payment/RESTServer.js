@@ -6,6 +6,10 @@ import sql from './db.js';
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
+app.get('/', (req, res) => {
+    res.send(`${process.env.NAME} service v${process.env.VERSION}`);
+});
+
 app.get('/payment', async (req, res) => {
     const payment = await sql`SELECT * FROM payment`;
 

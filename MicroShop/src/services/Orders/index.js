@@ -18,7 +18,9 @@ const CustomerService = process.env.CUSTOMER_SERVICE;
 
 const connection = await amqp.connect(process.env.AMQP_SERVER);
 const channel = await connection.createChannel();
-channel.assertQueue(process.env.ORDERS_QUEUE);
+channel.assertQueue(process.env.ORDERS_QUEUE, {
+    durable: false
+});
 
 function publishToQueue(order) {
     const message = Buffer.from(
@@ -32,6 +34,10 @@ await sql`CREATE TABLE IF NOT EXISTS orders (id SERIAL, customer_id INTEGER, pro
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
+
+app.get('/', (req, res) => {
+    res.send(`${process.env.NAME} service v${process.env.VERSION}`);
+});
 
 app.get('/orders', async (req, res) => {
     const orders = await sql`SELECT * FROM orders`;
