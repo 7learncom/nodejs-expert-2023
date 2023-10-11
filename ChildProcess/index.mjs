@@ -1,4 +1,4 @@
-import { exec, spawn } from 'child_process';
+import { exec, spawn, fork } from 'child_process';
 
 console.log(`Process #${process.pid} is started`);
 
@@ -32,6 +32,15 @@ const child3 = spawn('wc');
 
 process.stdin.pipe(child3.stdin);
 child3.stdout.pipe(process.stdout);
+
+// fork
+const forked = fork('fork.mjs');
+const fibonacci = 42;
+
+forked.send({ fibonacci });
+forked.on('message', (message) => {
+    console.log('Fibonacci(', fibonacci, ')', message);
+});
 
 process.on('exit', (code) => {
     console.log(`Process #${process.pid} is exited with code ${code}`);
