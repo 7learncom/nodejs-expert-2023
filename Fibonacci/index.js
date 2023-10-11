@@ -16,3 +16,12 @@ http.createServer((req, res) => {
 }).listen(PORT, () => {
     console.log(`Process #${process.pid} is listening on port ${PORT}`);
 });
+
+process.on('message', ({ message }) => {
+    console.log(`A message from the boss: ${message}`);
+});
+
+// random crash
+// setTimeout(() => {
+//     process.exit(1);
+// }, Math.random() * 4000);

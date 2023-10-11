@@ -13,6 +13,21 @@ function main() {
     for (let i = 0; i < cpus; i++) {
         cluster.fork();
     }
+
+    setTimeout(() => {
+        Object.values(cluster.workers).forEach(worker => {
+            worker.send({ message: 'Hello!' });
+        });
+    }, 2000);
+
+    cluster.on('exit', (worker, code) => {
+        if (code === 0 || worker.exitedAfterDisconnect) {
+            return;
+        }
+
+        console.log(`Worker #${worker.id} crashed, restarting...`);
+        cluster.fork();
+    });
 }
 
 main();
