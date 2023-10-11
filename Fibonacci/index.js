@@ -22,6 +22,6 @@ process.on('message', ({ message }) => {
 });
 
 // random crash
-// setTimeout(() => {
-//     process.exit(1);
-// }, Math.random() * 4000);
+setTimeout(() => {
+    process.exit(1);
+}, Math.random() * 4000);
